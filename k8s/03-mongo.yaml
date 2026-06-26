@@ -1,0 +1,38 @@
+# Demo-grade Mongo (emptyDir, single replica). For production, use a
+# managed MongoDB (Atlas) or a StatefulSet with a real PersistentVolumeClaim
+# so audit history survives pod rescheduling.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mongo
+  namespace: opsagent-x
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: mongo }
+  template:
+    metadata:
+      labels: { app: mongo }
+    spec:
+      containers:
+        - name: mongo
+          image: mongo:7
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: data
+              mountPath: /data/db
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mongo
+  namespace: opsagent-x
+spec:
+  selector: { app: mongo }
+  ports:
+    - port: 27017
+      targetPort: 27017

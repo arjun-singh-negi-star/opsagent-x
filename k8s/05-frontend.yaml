@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opsagent-frontend
+  namespace: opsagent-x
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: opsagent-frontend }
+  template:
+    metadata:
+      labels: { app: opsagent-frontend }
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/your-org/opsagent-x-frontend:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: NEXT_PUBLIC_API_BASE_URL
+              value: "https://opsagent.yourcompany.com/api"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opsagent-frontend
+  namespace: opsagent-x
+spec:
+  selector: { app: opsagent-frontend }
+  ports:
+    - port: 3000
+      targetPort: 3000

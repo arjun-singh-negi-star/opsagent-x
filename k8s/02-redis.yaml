@@ -1,0 +1,40 @@
+# Demo-grade Redis (emptyDir, single replica). For production, point
+# REDIS_URL at a managed Redis (ElastiCache, Memorystore, Redis Cloud) or
+# run the Redis Operator with a real PersistentVolumeClaim instead.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: opsagent-x
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: redis }
+  template:
+    metadata:
+      labels: { app: redis }
+    spec:
+      containers:
+        - name: redis
+          # Must be Redis 8+ — langgraph-checkpoint-redis needs the
+          # RediSearch + RedisJSON modules, bundled in core Redis since 8.0.
+          image: redis:8-alpine
+          ports:
+            - containerPort: 6379
+          volumeMounts:
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: data
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: opsagent-x
+spec:
+  selector: { app: redis }
+  ports:
+    - port: 6379
+      targetPort: 6379

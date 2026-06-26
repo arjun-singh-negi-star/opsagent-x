@@ -1,0 +1,42 @@
+# A throwaway pod for Docker Desktop's local Kubernetes cluster, so
+# LogAnalyst has a *real* pod and *real* logs to fetch instead of hitting
+# "no kubeconfig" or "pod not found" errors.
+#
+# It deliberately exits non-zero on a short loop so Kubernetes restarts it
+# (CrashLoopBackOff), matching the test alert's "crash-looping" narrative.
+# The exit code (137) mimics what a real OOM-killed container exits with —
+# note this is a *staged* exit, not a genuine memory-pressure OOM kill
+# (reliably forcing a real OOM on a tiny busybox container deterministically
+# isn't worth the complexity for a local smoke test). The logs it produces
+# are real and really fetched via the Kubernetes API either way.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: staging
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: checkout-api
+  namespace: staging
+  labels:
+    app: checkout-api
+spec:
+  restartPolicy: Always
+  containers:
+    - name: checkout-api
+      image: busybox
+      command: ["sh", "-c"]
+      args:
+        - >
+          echo "[checkout-api] starting up...";
+          echo "[checkout-api] connecting to payments DB pool (size=10)...";
+          sleep 2;
+          echo "[checkout-api] processing order batch...";
+          echo "[checkout-api] FATAL: out of memory, killing process (limit 16Mi exceeded)";
+          exit 137
+      resources:
+        limits:
+          memory: "16Mi"
+        requests:
+          memory: "8Mi"

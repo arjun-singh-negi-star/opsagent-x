@@ -1,0 +1,77 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: opsagent-backend
+  namespace: opsagent-x
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: opsagent-backend }
+  template:
+    metadata:
+      labels: { app: opsagent-backend }
+    spec:
+      serviceAccountName: opsagent-backend
+      containers:
+        - name: backend
+          image: ghcr.io/your-org/opsagent-x-backend:latest
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef: { name: opsagent-x-secrets }
+          env:
+            - name: ENVIRONMENT
+              value: "production"
+            - name: K8S_IN_CLUSTER
+              value: "true"
+          readinessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: 8000 }
+            initialDelaySeconds: 15
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: opsagent-backend
+  namespace: opsagent-x
+spec:
+  selector: { app: opsagent-backend }
+  ports:
+    - port: 8000
+      targetPort: 8000
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: opsagent-backend
+  namespace: opsagent-x
+---
+# Safety constraint, enforced by the cluster itself (not just app code):
+# the agent's ServiceAccount can only GET/LIST pods and pod logs in its own
+# namespace. It cannot exec, delete, patch, or touch any other namespace.
+# Actual deploys go through ArgoCD, not direct cluster-admin from this pod.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: opsagent-log-reader
+  namespace: opsagent-x
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "pods/log"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: opsagent-log-reader-binding
+  namespace: opsagent-x
+subjects:
+  - kind: ServiceAccount
+    name: opsagent-backend
+    namespace: opsagent-x
+roleRef:
+  kind: Role
+  name: opsagent-log-reader
+  apiGroup: rbac.authorization.k8s.io

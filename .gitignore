@@ -1,0 +1,20 @@
+__pycache__/
+*.pyc
+.env
+.env.local
+node_modules/
+.next/
+out/
+dist/
+*.log
+.DS_Store
+.venv/
+venv/
+k8s/01-secrets.yaml
+
+# repo-under-management is meant to be YOUR OWN clone of a real service
+# (or the throwaway test repo from the README), with its own git history.
+# It's excluded wholesale, not just .gitignore'd files within it, because
+# any nested .git folder makes Git treat the whole directory as an
+# "embedded repository" otherwise.
+repo-under-management/
