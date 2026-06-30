@@ -209,4 +209,4 @@ event stream, the dashboard, and the deploy step (branch merge +
 - Map your actual Alertmanager/Datadog/PagerDuty payload shape to
   `AlertWebhookPayload` in `models/schemas.py`.
 - Set `REQUIRE_HUMAN_APPROVAL=false` only after you've built confidence in
-  the pipeline's patch quality on your codebase.
+  the pipeline's patch quality on your codebase. 
