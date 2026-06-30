@@ -18,3 +18,5 @@ k8s/01-secrets.yaml
 # any nested .git folder makes Git treat the whole directory as an
 # "embedded repository" otherwise.
 repo-under-management/
+kubeconfig-docker-desktop.yaml
+kubeconfig-docker-desktop.yaml
