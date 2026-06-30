@@ -190,22 +190,23 @@ kubectl apply -f k8s/06-ingress.yaml
 Build and push your own images first and update the `image:` fields in
 `04-backend.yaml` / `05-frontend.yaml` to point at your registry.
 
-## 7. What's a stub vs. what's real
+## 7. What's real vs. what to wire up for production
 
 **Real, working code:** the LangGraph state machine (fan-out/fan-in,
 retry loop, interrupt-based human approval, Redis checkpointing), the NIM
 client and tool-calling loop, the K8s log/PromQL/Trivy/Git tools, the SSE
-event stream, and the dashboard.
+event stream, the dashboard, and the deploy step (branch merge +
+`kubectl rollout restart`).
 
-**Intentionally stubbed — wire up before production:**
-- `deploy_node` (point it at ArgoCD or `kubectl apply`)
-- SonarQube in `verification_node` (only `pytest` is wired up)
-- Alertmanager/Datadog → `AlertWebhookPayload` field mapping for your
-  actual alert source
-- A real PVC-backed Redis/Mongo instead of the demo `emptyDir` ones in `k8s/`
-
-## Next steps
-
-If you'd like, I can also generate the GitHub Actions workflow to build
-and push the two Docker images, or write a couple of pytest tests for the
-graph's routing logic.
+**To harden before production:**
+- Replace the demo `emptyDir` Redis/Mongo in `k8s/` with PVC-backed
+  StatefulSets or managed services (ElastiCache, Atlas).
+- Wire a real CD system (ArgoCD/Flux) to watch `main` instead of the
+  in-process rollout-restart call in `deploy_node` — then `deploy_node`
+  just merges the branch and the CD system handles the rest.
+- Add SonarQube or another static-analysis step alongside `pytest` in
+  `verification_node`.
+- Map your actual Alertmanager/Datadog/PagerDuty payload shape to
+  `AlertWebhookPayload` in `models/schemas.py`.
+- Set `REQUIRE_HUMAN_APPROVAL=false` only after you've built confidence in
+  the pipeline's patch quality on your codebase.
