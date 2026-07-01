@@ -110,8 +110,9 @@ three named modes used exactly as in the original design:
 - `code_patch` refuses any file path that resolves outside the repo root.
 - Git tools never push or merge — CodeFixer only commits to a local
   feature branch.
-- `deploy_node` is stubbed deliberately — wire it to your real ArgoCD
-  sync only after you've watched the full flow in staging.
+- `deploy_node` merges the approved branch into `main` and triggers a
+  `kubectl rollout restart` — replace with ArgoCD/Flux for production
+  GitOps-style delivery.
 - The backend's Kubernetes ServiceAccount (`k8s/04-backend.yaml`) has an
   RBAC Role that can only `get`/`list` pods and pod logs in its own
   namespace — no write, delete, or exec permissions anywhere.
